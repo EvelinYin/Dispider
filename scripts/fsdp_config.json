@@ -1,0 +1,11 @@
+{
+    "fsdp_transformer_layer_cls_to_wrap": ["Qwen2DecoderLayer"],
+    "fsdp_backward_prefetch": "backward_pre",
+    "fsdp_forward_prefetch": false,
+    "fsdp_use_orig_params": true,
+    "fsdp_cpu_ram_efficient_loading": true,
+    "fsdp_sync_module_states": true,
+    "fsdp_state_dict_type": "FULL_STATE_DICT",
+    "fsdp_sharding_strategy": "SHARD_GRAD_OP",
+    "fsdp_activation_checkpointing": false
+}

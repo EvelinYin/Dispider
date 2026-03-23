@@ -256,7 +256,8 @@ class Qwen2Attention(nn.Module):
                     "for auto-regressive decoding with k/v caching, please make sure to initialize the attention class "
                     "with a layer index."
                 )
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+            # kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)  # removed in transformers>=4.43
+            kv_seq_len += past_key_value.get_seq_length(self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
 
@@ -349,7 +350,8 @@ class Qwen2FlashAttention2(Qwen2Attention):
                     "for auto-regressive decoding with k/v caching, please make sure to initialize the attention class "
                     "with a layer index."
                 )
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+            # kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)  # removed in transformers>=4.43
+            kv_seq_len += past_key_value.get_seq_length(self.layer_idx)
 
         # Because the input can be padded, the absolute sequence length depends on the max position id.
         rotary_seq_len = max(kv_seq_len, position_ids[:, -1].max().item()) + 1
@@ -497,7 +499,8 @@ class Qwen2SdpaAttention(Qwen2Attention):
 
         kv_seq_len = key_states.shape[-2]
         if past_key_value is not None:
-            kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)
+            # kv_seq_len += past_key_value.get_usable_length(kv_seq_len, self.layer_idx)  # removed in transformers>=4.43
+            kv_seq_len += past_key_value.get_seq_length(self.layer_idx)
         cos, sin = self.rotary_emb(value_states, seq_len=kv_seq_len)
 
         query_states, key_states = apply_rotary_pos_emb(query_states, key_states, cos, sin, position_ids)
@@ -839,6 +842,8 @@ class Qwen2Model(Qwen2PreTrainedModel):
                     "`use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`..."
                 )
                 use_cache = False
+            if not hasattr(self, "_gradient_checkpointing_func"):
+                self._gradient_checkpointing_func = torch.utils.checkpoint.checkpoint
 
         use_legacy_cache = False
         if use_cache and not isinstance(past_key_values, Cache) and not self.training:

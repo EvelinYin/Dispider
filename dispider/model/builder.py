@@ -139,8 +139,17 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
     #         else:
     #             tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False)
     #             model = AutoModelForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
+    # Resolve HF repo id to local cache and fix mm_compressor path
+    from huggingface_hub import snapshot_download
+    if not os.path.isdir(model_path):
+        model_path = snapshot_download(repo_id=model_path)
+    cfg = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
+    local_comp = os.path.join(model_path, "stream_compressor")
+    if os.path.isdir(local_comp):
+        cfg.mm_compressor = local_comp
+
     tokenizer = AutoTokenizer.from_pretrained(model_path, use_fast=False, trust_remote_code=True)
-    model = LongQwen2ForCausalLM.from_pretrained(model_path, low_cpu_mem_usage=True, **kwargs)
+    model = LongQwen2ForCausalLM.from_pretrained(model_path, config=cfg, low_cpu_mem_usage=True, **kwargs)
     image_processor = None
 
     # if 'llava' in model_name.lower() and 'long' not in model_name.lower():
