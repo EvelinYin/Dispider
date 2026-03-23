@@ -1,9 +1,9 @@
 # Slurm output
 *.out
 
-# Data and outputs
-datasets/
-outputs/
+# Data and outputs (dirs or symlinks)
+datasets
+outputs
 
 # Python
 __pycache__/
